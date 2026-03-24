@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure P2P File Transfer</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        :root { --primary: #25D366; --dark: #128C7E; --bg: #f0f2f5; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; margin: 0; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
+        h2 { color: var(--dark); margin-bottom: 10px; }
+        .box { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin: 15px 0; word-break: break-all; }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
+        .btn-send { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-whatsapp { background: #075E54; color: white; border: none; font-weight: bold; cursor: pointer; display: none; }
+        .btn-send:hover { background: var(--dark); }
+        #status { font-weight: bold; color: #555; margin: 10px 0; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Secure Share 🔐</h2>
+    <div id="status">सर्वर से जुड़ रहा है...</div>
+
+    <div id="sender-ui">
+        <p>1. फाइल चुनें और पासवर्ड सेट करें</p>
+        <input type="file" id="file-input">
+        <input type="text" id="set-password" placeholder="फाइल के लिए पासवर्ड बनाएँ">
+        <button class="btn-send" onclick="generateLink()">लिंक बनाएँ</button>
+        
+        <div id="link-area" class="hidden">
+            <p>आपका सुरक्षित लिंक:</p>
+            <div class="box" id="share-url"></div>
+            <button class="btn-whatsapp" id="whatsapp-btn" onclick="shareToWhatsApp()">WhatsApp पर भेजें 💬</button>
+        </div>
+    </div>
+
+    <div id="receiver-ui" class="hidden">
+        <p>सामने वाले ने आपको फाइल भेजी है।</p>
+        <div class="box" id="file-info">फाइल प्राप्त करने के लिए पासवर्ड डालें</div>
+        <input type="password" id="input-password" placeholder="पासवर्ड यहाँ लिखें">
+        <button class="btn-send" onclick="connectAndReceive()">फाइल रिसीव करें</button>
+    </div>
+
+    <div id="download-area"></div>
+</div>
+
+<script>
+    const peer = new Peer();
+    let myId = "";
+    let correctPassword = "";
+    let incomingFileData = null;
+
+    // पेज लोड होते ही चेक करें कि क्या यह रिसीवर लिंक है
+    window.onload = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('id')) {
+            document.getElementById('sender-ui').classList.add('hidden');
+            document.getElementById('receiver-ui').classList.remove('hidden');
+            document.getElementById('status').innerText = "कनेक्शन के लिए तैयार";
+        }
+    };
+
+    peer.on('open', (id) => {
+        myId = id;
+        document.getElementById('status').innerText = "ऑनलाइन - फाइल भेजने के लिए तैयार";
+    });
+
+    // लिंक जनरेट करने का फंक्शन
+    function generateLink() {
+        const pass = document.getElementById('set-password').value;
+        const file = document.getElementById('file-input').files[0];
+        
+        if(!file || !pass) return alert("फाइल और पासवर्ड दोनों ज़रूरी हैं!");
+        
+        correctPassword = pass;
+        const base_url = window.location.origin + window.location.pathname;
+        const final_url = `${base_url}?id=${myId}&p=${btoa(pass)}`; // p=password (base64)
+        
+        document.getElementById('share-url').innerText = final_url;
+        document.getElementById('link-area').classList.remove('hidden');
+        document.getElementById('whatsapp-btn').style.display = "block";
+    }
+
+    function shareToWhatsApp() {
+        const url = document.getElementById('share-url').innerText;
+        const pass = document.getElementById('set-password').value;
+        const text = `नमस्ते! मैंने आपको एक सुरक्षित फाइल भेजी है।\n\n🔗 लिंक: ${url}\n🔑 पासवर्ड: ${pass}\n\n(लिंक पर क्लिक करें और पासवर्ड डालकर फाइल डाउनलोड करें)`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    // रिसीवर के लिए: सेंडर से कनेक्ट होना
+    function connectAndReceive() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const senderId = urlParams.get('id');
+        const encryptedPass = urlParams.get('p');
+        const userPass = document.getElementById('input-password').value;
+
+        if(userPass !== atob(encryptedPass)) return alert("गलत पासवर्ड!");
+
+        document.getElementById('status').innerText = "सेंडर से जुड़ रहा है...";
+        const conn = peer.connect(senderId);
+
+        conn.on('open', () => {
+            document.getElementById('status').innerText = "जुड़ गया! फाइल मांग रहा है...";
+            conn.send({ type: 'REQUEST_FILE', pass: userPass });
+        });
+
+        conn.on('data', (data) => {
+            if(data.type === 'FILE_DATA') {
+                downloadFile(data);
+            } else if(data.type === 'ERROR') {
+                alert(data.msg);
+            }
+        });
+    }
+
+    // सेंडर के लिए: कनेक्शन हैंडल करना
+    peer.on('connection', (conn) => {
+        conn.on('data', (data) => {
+            if(data.type === 'REQUEST_FILE') {
+                const file = document.getElementById('file-input').files[0];
+                const setPass = document.getElementById('set-password').value;
+
+                if(data.pass === setPass) {
+                    document.getElementById('status').innerText = "फाइल भेज रहा है...";
+                    conn.send({
+                        type: 'FILE_DATA',
+                        file: file,
+                        name: file.name,
+                        fileType: file.type
+                    });
+                } else {
+                    conn.send({ type: 'ERROR', msg: 'गलत पासवर्ड' });
+                }
+            }
+        });
+    });
+
+    function downloadFile(data) {
+        const blob = new Blob([data.file], { type: data.fileType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = data.name;
+        a.click();
+        document.getElementById('status').innerText = "फाइल डाउनलोड हो गई!";
+    }
+</script>
+
+</body>
+</html>
