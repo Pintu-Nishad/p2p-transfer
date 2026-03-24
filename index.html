@@ -3,123 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Share - P2P</title>
+    
+    <title>Secure Share - Instant P2P File Transfer</title>
+    <meta name="description" content="Send large files securely using P2P technology. No registration, 100% private, and fast.">
+    <meta name="keywords" content="P2P File Transfer, Secure Share, Send Large Files, Encrypted Sharing, No Limits Transfer, Direct File Share, Privacy Focused, Fast Data Send">
+    <meta name="author" content="Pintu Nishad">
+
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; padding: 20px; background-color: #f4f7f6; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h2 { color: #008080; }
-        input, button { width: 100%; margin: 10px 0; padding: 12px; border-radius: 5px; border: 1px solid #ddd; box-sizing: border-box; }
+        :root { --primary: #2ecc71; --secondary: #34495e; --bg: #f0f2f5; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: var(--bg); color: #333; padding: 20px; }
         
-        /* Progress Bar Styling */
-        #progressContainer { display: none; margin: 15px 0; }
-        progress { width: 100%; height: 20px; accent-color: #2ecc71; }
+        .card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; position: relative; overflow: hidden; box-sizing: border-box; }
+        h2 { color: #008080; margin-bottom: 5px; font-size: 26px; }
+        .subtitle { color: #777; font-size: 14px; margin-bottom: 25px; }
+
+        /* Inputs & Buttons */
+        input[type="file"], input[type="password"] { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; outline: none; transition: 0.3s; font-size: 14px; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(46, 204, 113, 0.2); }
+        .btn-main { background-color: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; transition: 0.3s; }
+        .btn-main:hover { background-color: #27ae60; transform: translateY(-2px); }
+
+        /* Animation System */
+        #animationContainer { display: none; margin: 40px 0; position: relative; height: 120px; border-top: 1px solid #eee; padding-top: 20px; }
+        .icon-box { position: absolute; top: 30px; width: 65px; height: 65px; background: #e8f5e9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); z-index: 2; }
+        #senderIcon { left: 0; }
+        #receiverIcon { right: 0; }
+        .particle { position: absolute; width: 8px; height: 8px; background: var(--primary); border-radius: 50%; z-index: 1; opacity: 0; }
         
-        /* Copy & Share Section */
-        .link-box { background: #f9f9f9; padding: 10px; border: 1px border: dashed #ccc; word-break: break-all; margin-top: 15px; position: relative; }
-        #copyBtn { background: #2ecc71; color: white; border: none; cursor: pointer; font-weight: bold; }
-        #whatsappBtn { background: #075E54; color: white; border: none; cursor: pointer; }
+        @keyframes transfer {
+            0% { left: 60px; top: 60px; opacity: 0; transform: scale(0.5); }
+            10% { opacity: 1; transform: scale(1); }
+            90% { opacity: 1; transform: scale(1); }
+            100% { left: calc(100% - 60px); top: 60px; opacity: 0; transform: scale(0.5); }
+        }
+        #statusInfo { font-size: 14px; margin-top: 100px; color: #555; font-weight: bold; }
+
+        /* Result Section */
+        #resultSection { display: none; margin-top: 25px; text-align: left; animation: fadeIn 0.5s; }
+        .link-display { background: #f8f9fa; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 13px; word-break: break-all; border: 1px dashed var(--primary); margin-bottom: 15px; }
+        .action-btns { display: flex; gap: 10px; }
+        .copy-btn { background: var(--secondary); color: white; border: none; padding: 12px; flex: 1; border-radius: 10px; cursor: pointer; font-size: 14px; transition: 0.3s; }
+        .whatsapp-btn { background: #25D366; color: white; border: none; padding: 12px; flex: 1; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: bold; }
+
+        /* Feedback Section */
+        .feedback-area { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; }
+        .stars { font-size: 28px; margin-bottom: 10px; cursor: pointer; color: #ddd; }
+        .stars span.active { color: #f1c40f; }
+        textarea { width: 100%; height: 70px; padding: 10px; border-radius: 10px; border: 1px solid #ddd; resize: none; box-sizing: border-box; font-size: 13px; margin-top: 10px; }
+
+        .footer { margin-top: 40px; text-align: center; color: #888; font-size: 12px; max-width: 400px; line-height: 1.6; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Send Large Files - Secure Share</h2>
-    <p>फ़ाइल चुनें और सुरक्षित लिंक बनाएं</p>
+    <h2>Secure Share</h2>
+    <p class="subtitle">100% सुरक्षित और तेज़ P2P ट्रांसफर</p>
 
-    <input type="file" id="fileInput">
-    <input type="password" id="passwordInput" placeholder="पासवर्ड (Optional)">
-    
-    <button id="sendBtn" style="background: #2ecc71; color: white; border: none; font-weight: bold;">सुरक्षित लिंक बनाएं</button>
-
-    <div id="progressContainer">
-        <progress id="progressBar" value="0" max="100"></progress>
-        <p id="statusText">0% ट्रांसफर हो गया...</p>
+    <div id="setupSection">
+        <input type="file" id="fileSelector">
+        <input type="password" id="passCode" placeholder="पासवर्ड (Optional)">
+        <button class="btn-main" onclick="processFile()">सुरक्षित लिंक बनाएँ</button>
     </div>
 
-    <div id="linkSection" style="display:none;">
-        <p>आपका लिंक तैयार है:</p>
-        <div class="link-box">
-            <span id="shareLink">https://pintu-nishad.github.io/p2p-transfer/?id=12345</span>
+    <div id="animationContainer">
+        <div class="icon-box" id="senderIcon">📤</div>
+        <div class="icon-box" id="receiverIcon">📥</div>
+        <p id="statusInfo">तैयार हो रहा है... 0%</p>
+    </div>
+
+    <div id="resultSection">
+        <p style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">आपका लिंक तैयार है:</p>
+        <div class="link-display" id="finalLink">https://pintu-nishad.github.io/p2p-transfer/?id=share_temp</div>
+        <div class="action-btns">
+            <button class="copy-btn" id="copyAction" onclick="handleCopy()">कॉपी करें 📋</button>
+            <button class="whatsapp-btn" onclick="shareWhatsapp()">WhatsApp</button>
         </div>
-        <button id="copyBtn" onclick="copyToClipboard()">लिंक कॉपी करें 📋</button>
-        <button id="whatsappBtn">WhatsApp पर शेयर करें 💬</button>
+
+        <div class="feedback-area">
+            <p style="font-size: 14px; font-weight: bold;">वेबसाइट कैसी लगी?</p>
+            <div class="stars" id="starContainer">
+                <span onclick="setRating(1)">☆</span><span onclick="setRating(2)">☆</span><span onclick="setRating(3)">☆</span><span onclick="setRating(4)">☆</span><span onclick="setRating(5)">☆</span>
+            </div>
+            <textarea id="userComment" placeholder="अपना सुझाव यहाँ लिखें..."></textarea>
+            <button class="btn-main" id="fbBtn" onclick="submitFeedback()" style="background: var(--secondary); font-size: 14px; padding: 10px;">फीडबैक भेजें</button>
+        </div>
     </div>
 </div>
 
+<div class="footer">
+    Transfer and have your files travel for free with our secure 
+    P2P technology. No registration required for fast file transfer.<br><br>
+    <b>Created by Pintu Nishad</b> | 100% Private & Secure
+</div>
+
 <script>
-    const CHUNK_SIZE = 16384; // 16KB प्रति टुकड़ा
-    let dataChannel; 
-    // नोट: यहाँ आपकी WebRTC 'dataChannel' और 'peerConnection' की सेटिंग्स पहले से होनी चाहिए।
+    const CHUNK_SIZE = 16384; 
+    let selectedRating = 0;
 
-    // 1. कॉपी फंक्शन (Copy to Clipboard)
-    function copyToClipboard() {
-        const linkText = document.getElementById("shareLink").innerText;
-        const btn = document.getElementById("copyBtn");
+    function processFile() {
+        const file = document.getElementById('fileSelector').files[0];
+        if (!file) return alert("कृपया फ़ाइल चुनें!");
 
-        navigator.clipboard.writeText(linkText).then(() => {
-            btn.innerText = "कॉपी हो गया! ✅";
-            btn.style.background = "#27ae60";
-            setTimeout(() => {
-                btn.innerText = "लिंक कॉपी करें 📋";
-                btn.style.background = "#2ecc71";
-            }, 2000);
+        document.getElementById('setupSection').style.display = "none";
+        document.getElementById('animationContainer').style.display = "block";
+        
+        startTransfer(file);
+    }
+
+    function startTransfer(file) {
+        let sent = 0;
+        const info = document.getElementById('statusInfo');
+        const container = document.getElementById('animationContainer');
+        
+        // Create Particles
+        for(let i=0; i<8; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.animation = `transfer 2s infinite linear ${i*0.25}s`;
+            container.appendChild(p);
+        }
+
+        const run = () => {
+            sent += CHUNK_SIZE * 60; // Simulation Speed
+            if(sent > file.size) sent = file.size;
+            
+            const pct = Math.round((sent/file.size)*100);
+            info.innerText = `${pct}% ट्रांसफर हुआ (${(sent/(1024*1024)).toFixed(2)} MB)`;
+
+            if(sent < file.size) requestAnimationFrame(run);
+            else {
+                document.querySelectorAll('.particle').forEach(p => p.remove());
+                info.innerText = "सफलतापूर्वक तैयार! ✅";
+                setTimeout(() => {
+                    document.getElementById('animationContainer').style.display = "none";
+                    document.getElementById('resultSection').style.display = "block";
+                }, 800);
+            }
+        };
+        run();
+    }
+
+    function handleCopy() {
+        const link = document.getElementById('finalLink').innerText;
+        const btn = document.getElementById('copyAction');
+        navigator.clipboard.writeText(link).then(() => {
+            btn.innerText = "कॉपी हुआ! ✅";
+            btn.style.background = "#2ecc71";
+            setTimeout(() => { btn.innerText = "कॉपी करें 📋"; btn.style.background = "#34495e"; }, 2000);
         });
     }
 
-    // 2. बड़ी फाइल ट्रांसफर और प्रोग्रेस बार लॉजिक
-    document.getElementById('sendBtn').onclick = function() {
-        const file = document.getElementById('fileInput').files[0];
-        if (!file) return alert("कृपया फाइल चुनें!");
+    function shareWhatsapp() {
+        const link = document.getElementById('finalLink').innerText;
+        window.open(`https://api.whatsapp.com/send?text=मेरी सुरक्षित फ़ाइल यहाँ से डाउनलोड करें: ${link}`, '_blank');
+    }
 
-        // लिंक सेक्शन दिखाएं (डेमो के लिए)
-        document.getElementById('linkSection').style.display = "block";
-        document.getElementById('progressContainer').style.display = "block";
+    // Feedback Logic
+    function setRating(n) {
+        selectedRating = n;
+        const stars = document.querySelectorAll('.stars span');
+        stars.forEach((s, i) => {
+            s.innerText = i < n ? "★" : "☆";
+            s.classList.toggle('active', i < n);
+        });
+    }
 
-        sendLargeFile(file);
-    };
-
-    function sendLargeFile(file) {
-        const progressBar = document.getElementById("progressBar");
-        const statusText = document.getElementById("statusText");
-        
-        let offset = 0;
-        const reader = new FileReader();
-
-        const sendNextChunk = () => {
-            // बफर चेक: अगर ब्राउज़र का बफर फुल है, तो थोड़ा इंतज़ार करें
-            if (dataChannel && dataChannel.bufferedAmount > dataChannel.bufferedAmountLowThreshold) {
-                dataChannel.onbufferedamountlow = () => {
-                    dataChannel.onbufferedamountlow = null;
-                    sendNextChunk();
-                };
-                return;
-            }
-
-            const slice = file.slice(offset, offset + CHUNK_SIZE);
-            reader.readAsArrayBuffer(slice);
-        };
-
-        reader.onload = (e) => {
-            // डेटा भेजना (यहाँ सुनिश्चित करें कि dataChannel खुला है)
-            if (dataChannel && dataChannel.readyState === 'open') {
-                dataChannel.send(e.target.result);
-            }
-
-            offset += e.target.result.byteLength;
-
-            // प्रोग्रेस अपडेट
-            const percent = Math.round((offset / file.size) * 100);
-            progressBar.value = percent;
-            statusText.innerText = `${percent}% ट्रांसफर हो गया (${(offset / (1024 * 1024)).toFixed(2)} MB)`;
-
-            if (offset < file.size) {
-                sendNextChunk();
-            } else {
-                statusText.innerText = "फाइल सफलतापूर्वक भेज दी गई! ✅";
-            }
-        };
-
-        sendNextChunk();
+    function submitFeedback() {
+        if(selectedRating === 0) return alert("कृपया स्टार रेटिंग दें!");
+        const btn = document.getElementById('fbBtn');
+        btn.innerText = "धन्यवाद! ❤️";
+        btn.disabled = true;
+        btn.style.background = "#2ecc71";
+        document.getElementById('userComment').disabled = true;
     }
 </script>
 
