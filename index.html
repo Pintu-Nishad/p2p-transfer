@@ -3,116 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Share - P2P</title>
+    <title>Secure P2P Share</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root { --primary: #2ecc71; --secondary: #34495e; --bg: #f0f2f5; }
         body { font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg); padding: 20px; }
         .card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
-        
-        /* Animation */
-        .loader-box { display: none; margin: 20px 0; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-main:hover { background: #27ae60; }
-        #result { display: none; background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px dashed var(--primary); margin-top: 20px; word-break: break-all; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .loader { display: none; margin: 20px 0; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #linkBox { display: none; background: #e8f5e9; padding: 15px; border-radius: 12px; border: 1px dashed var(--primary); margin-top: 20px; word-break: break-all; font-size: 13px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 id="title">Secure Share</h2>
-    <p id="msg">फाइल और पासवर्ड चुनें</p>
+    <h2 id="mainTitle">Secure Share</h2>
+    <p id="statusMsg">फाइल चुनें और पासवर्ड सेट करें</p>
 
-    <div id="senderUI">
-        <input type="file" id="fileIn">
-        <input type="password" id="passIn" placeholder="सिक्योरिटी पासवर्ड बनाएँ">
-        <button class="btn-main" onclick="createSecureLink()">सुरक्षित लिंक बनाएँ</button>
+    <div id="uiContainer">
+        <input type="file" id="fileInput">
+        <input type="password" id="passwordInput" placeholder="पासवर्ड बनाएँ">
+        <button class="btn-main" onclick="initSender()">सुरक्षित लिंक बनाएँ</button>
     </div>
 
-    <div id="receiverUI" style="display:none;">
-        <input type="password" id="passCheck" placeholder="पासवर्ड डालें">
-        <button class="btn-main" onclick="verifyAndDownload()">फाइल प्राप्त करें</button>
-    </div>
-
-    <div id="loader" class="loader-box">
+    <div id="loader" class="loader">
         <div class="spinner"></div>
-        <p id="statusTxt">इंतज़ार करें...</p>
+        <p id="loaderTxt">कनेक्ट हो रहा है... इंतज़ार करें</p>
     </div>
 
-    <div id="result"></div>
-    <button id="copyBtn" class="btn-main" style="display:none; margin-top:10px; background:var(--secondary);" onclick="copyLink()">कॉपी करें 📋</button>
+    <div id="linkBox"></div>
 </div>
 
 <script>
-    // 1. लिंक बनाने का लॉजिक (Sender)
-    function createSecureLink() {
-        const file = document.getElementById('fileIn').files[0];
-        const pass = document.getElementById('passIn').value;
+    let peer;
+    let myFile;
+    let myPassword;
 
-        if (!file || !pass) return alert("फाइल और पासवर्ड दोनों जरूरी हैं!");
+    // 1. भेजने वाले का लॉजिक
+    function initSender() {
+        myFile = document.getElementById('fileInput').files[0];
+        myPassword = document.getElementById('passwordInput').value;
 
-        document.getElementById('senderUI').style.display = "none";
+        if (!myFile || !myPassword) return alert("फाइल और पासवर्ड दोनों भरें!");
+
+        document.getElementById('uiContainer').style.display = "none";
         document.getElementById('loader').style.display = "block";
 
-        let p = 0;
-        const inv = setInterval(() => {
-            p += 20;
-            document.getElementById('statusTxt').innerText = `लिंक एन्क्रिप्ट हो रहा है: ${p}%`;
-            if(p >= 100) {
-                clearInterval(inv);
-                const finalUrl = window.location.href.split('?')[0] + `?file=${encodeURIComponent(file.name)}&pass=${btoa(pass)}`;
-                showResult(finalUrl);
-            }
-        }, 400);
+        peer = new Peer(); // नया Peer ID जनरेट होगा
+
+        peer.on('open', (id) => {
+            const shareUrl = window.location.href.split('?')[0] + `?peer=${id}&name=${encodeURIComponent(myFile.name)}&pass=${btoa(myPassword)}`;
+            document.getElementById('loader').style.display = "none";
+            const lb = document.getElementById('linkBox');
+            lb.innerHTML = `<strong>लिंक तैयार है:</strong><br>${shareUrl}<br><br><button class="btn-main" onclick="copyText('${shareUrl}')">लिंक कॉपी करें</button>`;
+            lb.style.display = "block";
+            document.getElementById('statusMsg').innerText = "फाइल भेजने के लिए तैयार है (पेज बंद न करें)";
+        });
+
+        // जब कोई दूसरा यूजर कनेक्ट हो
+        peer.on('connection', (conn) => {
+            conn.on('data', (data) => {
+                if (data.type === 'request' && data.pass === myPassword) {
+                    document.getElementById('statusMsg').innerText = "फाइल भेजी जा रही है...";
+                    conn.send({ file: myFile, fileName: myFile.name, type: 'file' });
+                }
+            });
+        });
     }
 
-    function showResult(link) {
-        document.getElementById('loader').style.display = "none";
-        document.getElementById('result').innerText = link;
-        document.getElementById('result').style.display = "block";
-        document.getElementById('copyBtn').style.display = "block";
-        document.getElementById('msg').innerText = "लिंक तैयार है!";
-    }
-
-    // 2. लिंक ओपन होने पर (Receiver)
+    // 2. पाने वाले का लॉजिक (Receiver)
     window.onload = () => {
         const params = new URLSearchParams(window.location.search);
-        if (params.has('file')) {
-            document.getElementById('senderUI').style.display = "none";
-            document.getElementById('receiverUI').style.display = "block";
-            document.getElementById('title').innerText = "फाइल रिसीव करें";
-            document.getElementById('msg').innerText = "पासवर्ड डालकर फाइल अनलॉक करें";
+        if (params.has('peer')) {
+            document.getElementById('uiContainer').innerHTML = `
+                <p>फाइल: <strong>${params.get('name')}</strong></p>
+                <input type="password" id="checkPass" placeholder="पासवर्ड डालें">
+                <button class="btn-main" onclick="connectToSender()">डाउनलोड करें</button>
+            `;
+            document.getElementById('statusMsg').innerText = "फाइल प्राप्त करने के लिए पासवर्ड डालें";
         }
     };
 
-    function verifyAndDownload() {
+    function connectToSender() {
         const params = new URLSearchParams(window.location.search);
-        const correctPass = atob(params.get('pass'));
-        const userPass = document.getElementById('passCheck').value;
+        const targetPeerId = params.get('peer');
+        const enteredPass = document.getElementById('checkPass').value;
 
-        if (userPass !== correctPass) return alert("गलत पासवर्ड!");
-
-        document.getElementById('receiverUI').style.display = "none";
+        document.getElementById('uiContainer').style.display = "none";
         document.getElementById('loader').style.display = "block";
+        document.getElementById('loaderTxt').innerText = "भेजने वाले से कनेक्ट हो रहा है... इंतज़ार करें";
 
-        let p = 0;
-        const inv = setInterval(() => {
-            p += 10;
-            document.getElementById('statusTxt').innerText = `फाइल डाउनलोड हो रही है: ${p}% (इंतज़ार करें)`;
-            if(p >= 100) {
-                clearInterval(inv);
-                document.getElementById('statusTxt').innerText = "सफलतापूर्वक डाउनलोड! ✅";
-                alert("फाइल सेव हो गई है!");
-            }
-        }, 300);
+        const receiverPeer = new Peer();
+        receiverPeer.on('open', () => {
+            const conn = receiverPeer.connect(targetPeerId);
+            conn.on('open', () => {
+                conn.send({ type: 'request', pass: enteredPass });
+            });
+
+            conn.on('data', (data) => {
+                if (data.type === 'file') {
+                    const blob = new Blob([data.file]);
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = data.fileName;
+                    a.click();
+                    
+                    document.getElementById('loader').style.display = "none";
+                    document.getElementById('statusMsg').innerText = "फाइल सफलतापूर्वक डाउनलोड हुई! ✅";
+                }
+            });
+        });
     }
 
-    function copyLink() {
-        navigator.clipboard.writeText(document.getElementById('result').innerText);
-        alert("लिंक कॉपी हुआ!");
+    function copyText(text) {
+        navigator.clipboard.writeText(text);
+        alert("लिंक कॉपी हो गया!");
     }
 </script>
 
