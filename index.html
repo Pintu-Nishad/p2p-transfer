@@ -3,29 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live P2P Transfer</title>
+    <title>Secure P2P Share - Live</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root { --primary: #2ecc71; --secondary: #34495e; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; border: 1px solid #eee; }
         
-        /* Progress Bar Styling */
         .progress-container { display: none; margin: 20px 0; }
-        .progress-bar { width: 100%; background: #eee; height: 12px; border-radius: 10px; overflow: hidden; position: relative; }
-        .progress-fill { width: 0%; height: 100%; background: var(--primary); transition: width 0.2s; }
+        .progress-bar { width: 100%; background: #eee; height: 12px; border-radius: 10px; overflow: hidden; margin-top: 10px; }
+        .progress-fill { width: 0%; height: 100%; background: var(--primary); transition: width 0.1s; }
         
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; margin: 10px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        #linkArea { display: none; background: #e8f5e9; padding: 10px; border-radius: 8px; margin-top: 15px; word-break: break-all; font-size: 12px; border: 1px dashed #27ae60; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; outline: none; }
+        .btn { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .btn:hover { background: #27ae60; transform: translateY(-2px); }
+        #linkArea { display: none; background: #e8f5e9; padding: 15px; border-radius: 10px; margin-top: 15px; word-break: break-all; font-size: 13px; border: 1px dashed #2ecc71; }
+        .success-icon { font-size: 40px; color: var(--primary); display: none; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="card">
+    <div id="iconBox" class="success-icon">✅</div>
     <h2 id="head">Secure P2P</h2>
     <p id="status">फाइल और पासवर्ड सेट करें</p>
 
@@ -41,8 +43,8 @@
     </div>
 
     <div id="transferUI" class="progress-container">
-        <div class="spinner"></div>
-        <p id="progressTxt">कनेक्ट हो रहा है... 0%</p>
+        <div id="liveSpinner" class="spinner"></div>
+        <p id="progressTxt">कनेक्ट हो रहा है...</p>
         <div class="progress-bar"><div id="fill" class="progress-fill"></div></div>
     </div>
 
@@ -51,104 +53,102 @@
 
 <script>
     let peer, conn, myFile, myPass;
-    const CHUNK_SIZE = 64 * 1024; // 64KB chunks
+    const CHUNK_SIZE = 128 * 1024; // 128KB chunks for faster speed
 
-    // 1. भेजने वाला (Sender)
     function startSender() {
         myFile = document.getElementById('fileIn').files[0];
         myPass = document.getElementById('passIn').value;
-        if(!myFile || !myPass) return alert("सब कुछ भरें!");
+        if(!myFile || !myPass) return alert("कृपया फाइल और पासवर्ड भरें!");
 
         document.getElementById('setupUI').style.display = "none";
         peer = new Peer();
         
         peer.on('open', (id) => {
-            const url = window.location.href.split('?')[0] + `?id=${id}&n=${encodeURIComponent(myFile.name)}&p=${btoa(myPass)}`;
+            const sizeMB = (myFile.size / (1024*1024)).toFixed(2);
+            const url = window.location.href.split('?')[0] + `?id=${id}&n=${encodeURIComponent(myFile.name)}&p=${btoa(myPass)}&s=${sizeMB}`;
             const la = document.getElementById('linkArea');
-            la.innerHTML = `<strong>लिंक भेजें:</strong><br>${url}<br><br><button onclick="copy('${url}')" style="font-size:10px">कॉपी करें</button>`;
+            la.innerHTML = `<strong>लिंक भेजें (Size: ${sizeMB} MB):</strong><br><small>${url}</small><br><br><button class="btn" onclick="copy('${url}')" style="padding:10px; font-size:12px; background:var(--secondary)">लिंक कॉपी करें 📋</button>`;
             la.style.display = "block";
-            document.getElementById('status').innerText = "इंतज़ार करें... (पाने वाले का)";
+            document.getElementById('status').innerText = "पाने वाले का इंतज़ार है...";
         });
 
         peer.on('connection', (c) => {
             conn = c;
-            conn.on('data', (data) => {
+            conn.on('data', async (data) => {
                 if(data.type === 'auth' && data.pass === myPass) {
                     document.getElementById('linkArea').style.display = "none";
                     document.getElementById('transferUI').style.display = "block";
                     document.getElementById('status').innerText = "फाइल भेजी जा रही है...";
-                    sendFileChunks();
+                    await sendChunks();
                 } else if(data.type === 'auth') {
-                    alert("सामने वाले ने गलत पासवर्ड डाला!");
+                    alert("गलत पासवर्ड डाला गया है!");
                 }
             });
         });
     }
 
-    async function sendFileChunks() {
+    async function sendChunks() {
         const totalChunks = Math.ceil(myFile.size / CHUNK_SIZE);
         for (let i = 0; i < totalChunks; i++) {
             const start = i * CHUNK_SIZE;
             const end = Math.min(start + CHUNK_SIZE, myFile.size);
-            const chunk = myFile.slice(start, end);
-            const arrayBuffer = await chunk.arrayBuffer();
+            const chunk = await myFile.slice(start, end).arrayBuffer();
             
-            conn.send({ 
-                type: 'chunk', 
-                data: arrayBuffer, 
-                index: i, 
-                total: totalChunks,
-                fileName: myFile.name 
-            });
+            conn.send({ type: 'chunk', data: chunk, index: i, total: totalChunks, fileName: myFile.name });
 
-            // Update Sender Animation
             const pct = Math.round(((i + 1) / totalChunks) * 100);
             updateUI(pct, `भेजा जा रहा है: ${pct}%`);
         }
+        // Sender Side Confirmation
+        setTimeout(() => {
+            document.getElementById('liveSpinner').style.display = "none";
+            document.getElementById('iconBox').style.display = "block";
+            document.getElementById('status').innerText = "फाइल सफलतापूर्वक भेजी गई! ✅";
+            document.getElementById('progressTxt').innerText = "ट्रांसफर पूरा हुआ (100%)";
+        }, 500);
     }
 
-    // 2. पाने वाला (Receiver)
     window.onload = () => {
         const params = new URLSearchParams(window.location.search);
         if(params.has('id')) {
             document.getElementById('setupUI').style.display = "none";
             document.getElementById('receiveUI').style.display = "block";
-            document.getElementById('status').innerText = "पासवर्ड डालें";
+            document.getElementById('status').innerText = `फाइल: ${params.get('n')} (${params.get('s')} MB)`;
             document.getElementById('head').innerText = "फाइल प्राप्त करें";
         }
     };
 
     function startReceiver() {
         const params = new URLSearchParams(window.location.search);
-        const senderId = params.get('id');
         const pass = document.getElementById('passCheck').value;
         
         peer = new Peer();
         peer.on('open', () => {
-            conn = peer.connect(senderId);
+            conn = peer.connect(params.get('id'));
             conn.on('open', () => {
                 conn.send({ type: 'auth', pass: pass });
                 document.getElementById('receiveUI').style.display = "none";
                 document.getElementById('transferUI').style.display = "block";
-                document.getElementById('status').innerText = "कनेक्ट हो रहा है...";
+                document.getElementById('status').innerText = "डाउनलोडिंग...";
             });
 
-            let receivedChunks = [];
+            let receivedData = [];
             conn.on('data', (data) => {
                 if(data.type === 'chunk') {
-                    receivedChunks[data.index] = data.data;
+                    receivedData[data.index] = data.data;
                     const pct = Math.round(((data.index + 1) / data.total) * 100);
                     updateUI(pct, `प्राप्त हो रहा है: ${pct}%`);
 
-                    if(receivedChunks.length === data.total) {
-                        const blob = new Blob(receivedChunks);
-                        const url = URL.createObjectURL(blob);
+                    if(receivedData.length === data.total && !receivedData.includes(undefined)) {
+                        const blob = new Blob(receivedData);
                         const a = document.createElement('a');
-                        a.href = url;
+                        a.href = URL.createObjectURL(blob);
                         a.download = data.fileName;
                         a.click();
+                        
+                        document.getElementById('liveSpinner').style.display = "none";
+                        document.getElementById('iconBox').style.display = "block";
                         document.getElementById('status').innerText = "डाउनलोड पूरा हुआ! ✅";
-                        document.querySelector('.spinner').style.display = "none";
                     }
                 }
             });
@@ -160,7 +160,10 @@
         document.getElementById('progressTxt').innerText = txt;
     }
 
-    function copy(t) { navigator.clipboard.writeText(t); alert("कॉपी!"); }
+    function copy(t) { 
+        navigator.clipboard.writeText(t); 
+        alert("लिंक कॉपी हो गया! अब इसे WhatsApp पर भेजें।"); 
+    }
 </script>
 
 </body>
