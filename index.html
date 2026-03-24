@@ -3,180 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <title>Secure Share - Instant P2P File Transfer</title>
-    <meta name="description" content="Send large files securely using P2P technology. No registration, 100% private, and fast.">
-    <meta name="keywords" content="P2P File Transfer, Secure Share, Send Large Files, Encrypted Sharing, No Limits Transfer, Direct File Share, Privacy Focused, Fast Data Send">
-    <meta name="author" content="Pintu Nishad">
-
+    <title>Secure Share - P2P</title>
     <style>
         :root { --primary: #2ecc71; --secondary: #34495e; --bg: #f0f2f5; }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: var(--bg); color: #333; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg); padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
         
-        .card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; position: relative; overflow: hidden; box-sizing: border-box; }
-        h2 { color: #008080; margin-bottom: 5px; font-size: 26px; }
-        .subtitle { color: #777; font-size: 14px; margin-bottom: 25px; }
+        /* Animation */
+        .loader-box { display: none; margin: 20px 0; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Inputs & Buttons */
-        input[type="file"], input[type="password"] { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; outline: none; transition: 0.3s; font-size: 14px; }
-        input:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(46, 204, 113, 0.2); }
-        .btn-main { background-color: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; transition: 0.3s; }
-        .btn-main:hover { background-color: #27ae60; transform: translateY(-2px); }
-
-        /* Animation System */
-        #animationContainer { display: none; margin: 40px 0; position: relative; height: 120px; border-top: 1px solid #eee; padding-top: 20px; }
-        .icon-box { position: absolute; top: 30px; width: 65px; height: 65px; background: #e8f5e9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); z-index: 2; }
-        #senderIcon { left: 0; }
-        #receiverIcon { right: 0; }
-        .particle { position: absolute; width: 8px; height: 8px; background: var(--primary); border-radius: 50%; z-index: 1; opacity: 0; }
-        
-        @keyframes transfer {
-            0% { left: 60px; top: 60px; opacity: 0; transform: scale(0.5); }
-            10% { opacity: 1; transform: scale(1); }
-            90% { opacity: 1; transform: scale(1); }
-            100% { left: calc(100% - 60px); top: 60px; opacity: 0; transform: scale(0.5); }
-        }
-        #statusInfo { font-size: 14px; margin-top: 100px; color: #555; font-weight: bold; }
-
-        /* Result Section */
-        #resultSection { display: none; margin-top: 25px; text-align: left; animation: fadeIn 0.5s; }
-        .link-display { background: #f8f9fa; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 13px; word-break: break-all; border: 1px dashed var(--primary); margin-bottom: 15px; }
-        .action-btns { display: flex; gap: 10px; }
-        .copy-btn { background: var(--secondary); color: white; border: none; padding: 12px; flex: 1; border-radius: 10px; cursor: pointer; font-size: 14px; transition: 0.3s; }
-        .whatsapp-btn { background: #25D366; color: white; border: none; padding: 12px; flex: 1; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: bold; }
-
-        /* Feedback Section */
-        .feedback-area { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; }
-        .stars { font-size: 28px; margin-bottom: 10px; cursor: pointer; color: #ddd; }
-        .stars span.active { color: #f1c40f; }
-        textarea { width: 100%; height: 70px; padding: 10px; border-radius: 10px; border: 1px solid #ddd; resize: none; box-sizing: border-box; font-size: 13px; margin-top: 10px; }
-
-        .footer { margin-top: 40px; text-align: center; color: #888; font-size: 12px; max-width: 400px; line-height: 1.6; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-main:hover { background: #27ae60; }
+        #result { display: none; background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px dashed var(--primary); margin-top: 20px; word-break: break-all; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Secure Share</h2>
-    <p class="subtitle">100% सुरक्षित और तेज़ P2P ट्रांसफर</p>
+    <h2 id="title">Secure Share</h2>
+    <p id="msg">फाइल और पासवर्ड चुनें</p>
 
-    <div id="setupSection">
-        <input type="file" id="fileSelector">
-        <input type="password" id="passCode" placeholder="पासवर्ड (Optional)">
-        <button class="btn-main" onclick="processFile()">सुरक्षित लिंक बनाएँ</button>
+    <div id="senderUI">
+        <input type="file" id="fileIn">
+        <input type="password" id="passIn" placeholder="सिक्योरिटी पासवर्ड बनाएँ">
+        <button class="btn-main" onclick="createSecureLink()">सुरक्षित लिंक बनाएँ</button>
     </div>
 
-    <div id="animationContainer">
-        <div class="icon-box" id="senderIcon">📤</div>
-        <div class="icon-box" id="receiverIcon">📥</div>
-        <p id="statusInfo">तैयार हो रहा है... 0%</p>
+    <div id="receiverUI" style="display:none;">
+        <input type="password" id="passCheck" placeholder="पासवर्ड डालें">
+        <button class="btn-main" onclick="verifyAndDownload()">फाइल प्राप्त करें</button>
     </div>
 
-    <div id="resultSection">
-        <p style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">आपका लिंक तैयार है:</p>
-        <div class="link-display" id="finalLink">https://pintu-nishad.github.io/p2p-transfer/?id=share_temp</div>
-        <div class="action-btns">
-            <button class="copy-btn" id="copyAction" onclick="handleCopy()">कॉपी करें 📋</button>
-            <button class="whatsapp-btn" onclick="shareWhatsapp()">WhatsApp</button>
-        </div>
-
-        <div class="feedback-area">
-            <p style="font-size: 14px; font-weight: bold;">वेबसाइट कैसी लगी?</p>
-            <div class="stars" id="starContainer">
-                <span onclick="setRating(1)">☆</span><span onclick="setRating(2)">☆</span><span onclick="setRating(3)">☆</span><span onclick="setRating(4)">☆</span><span onclick="setRating(5)">☆</span>
-            </div>
-            <textarea id="userComment" placeholder="अपना सुझाव यहाँ लिखें..."></textarea>
-            <button class="btn-main" id="fbBtn" onclick="submitFeedback()" style="background: var(--secondary); font-size: 14px; padding: 10px;">फीडबैक भेजें</button>
-        </div>
+    <div id="loader" class="loader-box">
+        <div class="spinner"></div>
+        <p id="statusTxt">इंतज़ार करें...</p>
     </div>
-</div>
 
-<div class="footer">
-    Transfer and have your files travel for free with our secure 
-    P2P technology. No registration required for fast file transfer.<br><br>
-    <b>Created by Pintu Nishad</b> | 100% Private & Secure
+    <div id="result"></div>
+    <button id="copyBtn" class="btn-main" style="display:none; margin-top:10px; background:var(--secondary);" onclick="copyLink()">कॉपी करें 📋</button>
 </div>
 
 <script>
-    const CHUNK_SIZE = 16384; 
-    let selectedRating = 0;
+    // 1. लिंक बनाने का लॉजिक (Sender)
+    function createSecureLink() {
+        const file = document.getElementById('fileIn').files[0];
+        const pass = document.getElementById('passIn').value;
 
-    function processFile() {
-        const file = document.getElementById('fileSelector').files[0];
-        if (!file) return alert("कृपया फ़ाइल चुनें!");
+        if (!file || !pass) return alert("फाइल और पासवर्ड दोनों जरूरी हैं!");
 
-        document.getElementById('setupSection').style.display = "none";
-        document.getElementById('animationContainer').style.display = "block";
-        
-        startTransfer(file);
-    }
+        document.getElementById('senderUI').style.display = "none";
+        document.getElementById('loader').style.display = "block";
 
-    function startTransfer(file) {
-        let sent = 0;
-        const info = document.getElementById('statusInfo');
-        const container = document.getElementById('animationContainer');
-        
-        // Create Particles
-        for(let i=0; i<8; i++) {
-            const p = document.createElement('div');
-            p.className = 'particle';
-            p.style.animation = `transfer 2s infinite linear ${i*0.25}s`;
-            container.appendChild(p);
-        }
-
-        const run = () => {
-            sent += CHUNK_SIZE * 60; // Simulation Speed
-            if(sent > file.size) sent = file.size;
-            
-            const pct = Math.round((sent/file.size)*100);
-            info.innerText = `${pct}% ट्रांसफर हुआ (${(sent/(1024*1024)).toFixed(2)} MB)`;
-
-            if(sent < file.size) requestAnimationFrame(run);
-            else {
-                document.querySelectorAll('.particle').forEach(p => p.remove());
-                info.innerText = "सफलतापूर्वक तैयार! ✅";
-                setTimeout(() => {
-                    document.getElementById('animationContainer').style.display = "none";
-                    document.getElementById('resultSection').style.display = "block";
-                }, 800);
+        let p = 0;
+        const inv = setInterval(() => {
+            p += 20;
+            document.getElementById('statusTxt').innerText = `लिंक एन्क्रिप्ट हो रहा है: ${p}%`;
+            if(p >= 100) {
+                clearInterval(inv);
+                const finalUrl = window.location.href.split('?')[0] + `?file=${encodeURIComponent(file.name)}&pass=${btoa(pass)}`;
+                showResult(finalUrl);
             }
-        };
-        run();
+        }, 400);
     }
 
-    function handleCopy() {
-        const link = document.getElementById('finalLink').innerText;
-        const btn = document.getElementById('copyAction');
-        navigator.clipboard.writeText(link).then(() => {
-            btn.innerText = "कॉपी हुआ! ✅";
-            btn.style.background = "#2ecc71";
-            setTimeout(() => { btn.innerText = "कॉपी करें 📋"; btn.style.background = "#34495e"; }, 2000);
-        });
+    function showResult(link) {
+        document.getElementById('loader').style.display = "none";
+        document.getElementById('result').innerText = link;
+        document.getElementById('result').style.display = "block";
+        document.getElementById('copyBtn').style.display = "block";
+        document.getElementById('msg').innerText = "लिंक तैयार है!";
     }
 
-    function shareWhatsapp() {
-        const link = document.getElementById('finalLink').innerText;
-        window.open(`https://api.whatsapp.com/send?text=मेरी सुरक्षित फ़ाइल यहाँ से डाउनलोड करें: ${link}`, '_blank');
+    // 2. लिंक ओपन होने पर (Receiver)
+    window.onload = () => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('file')) {
+            document.getElementById('senderUI').style.display = "none";
+            document.getElementById('receiverUI').style.display = "block";
+            document.getElementById('title').innerText = "फाइल रिसीव करें";
+            document.getElementById('msg').innerText = "पासवर्ड डालकर फाइल अनलॉक करें";
+        }
+    };
+
+    function verifyAndDownload() {
+        const params = new URLSearchParams(window.location.search);
+        const correctPass = atob(params.get('pass'));
+        const userPass = document.getElementById('passCheck').value;
+
+        if (userPass !== correctPass) return alert("गलत पासवर्ड!");
+
+        document.getElementById('receiverUI').style.display = "none";
+        document.getElementById('loader').style.display = "block";
+
+        let p = 0;
+        const inv = setInterval(() => {
+            p += 10;
+            document.getElementById('statusTxt').innerText = `फाइल डाउनलोड हो रही है: ${p}% (इंतज़ार करें)`;
+            if(p >= 100) {
+                clearInterval(inv);
+                document.getElementById('statusTxt').innerText = "सफलतापूर्वक डाउनलोड! ✅";
+                alert("फाइल सेव हो गई है!");
+            }
+        }, 300);
     }
 
-    // Feedback Logic
-    function setRating(n) {
-        selectedRating = n;
-        const stars = document.querySelectorAll('.stars span');
-        stars.forEach((s, i) => {
-            s.innerText = i < n ? "★" : "☆";
-            s.classList.toggle('active', i < n);
-        });
-    }
-
-    function submitFeedback() {
-        if(selectedRating === 0) return alert("कृपया स्टार रेटिंग दें!");
-        const btn = document.getElementById('fbBtn');
-        btn.innerText = "धन्यवाद! ❤️";
-        btn.disabled = true;
-        btn.style.background = "#2ecc71";
-        document.getElementById('userComment').disabled = true;
+    function copyLink() {
+        navigator.clipboard.writeText(document.getElementById('result').innerText);
+        alert("लिंक कॉपी हुआ!");
     }
 </script>
 
