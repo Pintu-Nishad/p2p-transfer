@@ -1,80 +1,68 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, viewport-fit=cover">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#25D366">
     <title>Send Large Files - Free Secure File Transfer - Pintu Nishad</title>
-    <meta name="description" content="Pintu Nishad provides a simple, quick and secure free solution to send large files and big documents. No registration required. Fast P2P transfer with zero server storage.">
-    <meta name="keywords" content="send large files, free file transfer, secure transfer, p2p file share, no registration, fast transfer, large documents transfer, Pintu Nishad, p2p-transfer">
+    <meta name="description" content="Pintu Nishad provides a simple, quick and secure free solution to send large files and documents. No registration required. Fast P2P file transfer.">
+    <meta name="keywords" content="send large files, free file transfer, secure share, fast file transfer, p2p transfer, no registration, Pintu Nishad">
     <meta name="author" content="Pintu Nishad">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://pintu-nishad.github.io/p2p-transfer/" />
 
-    <meta property="og:type" content="website">
+    <meta property="og:title" content="Send Large Files - Free Secure File Transfer">
+    <meta property="og:description" content="Transfer and have your files travel for free. Simple, quick, and secure.">
     <meta property="og:url" content="https://pintu-nishad.github.io/p2p-transfer/">
-    <meta property="og:title" content="Send Large Files - Free Secure File Transfer - Pintu Nishad">
-    <meta property="og:description" content="Transfer and have your files travel for free. No registration required. High-speed P2P secure sharing.">
-    <meta property="og:site_name" content="Pintu P2P Share">
+    <meta property="og:type" content="website">
 
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Send Large Files - Free Secure File Transfer">
-    <meta name="twitter:description" content="Simple and secure free solution to send big documents and files directly.">
-
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    
     <style>
-        :root { --primary: #25D366; --dark: #128C7E; --bg: #ffffff; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; color: #333; }
-        .card { background: #fdfdfd; padding: 30px; border-radius: 20px; border: 1px solid #eee; width: 100%; max-width: 480px; text-align: center; margin-top: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        h1 { color: #000; font-size: 28px; font-weight: 700; margin-bottom: 10px; line-height: 1.2; }
-        p.sub-text { color: #666; font-size: 16px; margin-bottom: 25px; }
-        .box { background: #f8f9fa; border: 1px dashed #ccc; padding: 15px; border-radius: 12px; margin: 15px 0; word-break: break-all; font-family: monospace; }
-        input[type="file"], input[type="text"], input[type="password"] { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
-        .btn-send { background: #000; color: #fff; border: none; font-weight: 600; cursor: pointer; padding: 15px; border-radius: 10px; transition: 0.2s; width: 100%; }
-        .btn-send:hover { background: #333; }
-        .btn-whatsapp { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; display: none; width: 100%; }
-        #status { font-size: 14px; color: #888; margin-bottom: 10px; }
-        .seo-footer { max-width: 500px; margin-top: 50px; text-align: left; padding: 20px; border-top: 1px solid #eee; }
-        .seo-footer h2 { font-size: 18px; margin-bottom: 10px; }
-        .seo-footer p { font-size: 14px; line-height: 1.6; color: #555; }
+        :root { --primary: #25D366; --dark: #128C7E; --bg: #f0f2f5; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; margin-top: 20px; }
+        h1 { color: var(--dark); font-size: 22px; margin-bottom: 15px; }
+        .box { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin: 15px 0; word-break: break-all; font-family: monospace; }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
+        .btn-send { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-whatsapp { background: #075E54; color: white; border: none; font-weight: bold; cursor: pointer; display: none; }
+        #status { font-weight: bold; color: #555; margin: 10px 0; }
+        .footer { margin-top: 30px; font-size: 12px; color: #888; text-align: center; max-width: 450px; line-height: 1.5; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>Transfer and have your files travel for free</h1>
-    <p class="sub-text">Secure, Fast, and No Registration Required.</p>
-    
-    <div id="status">Connecting to network...</div>
+    <h1>Send Large Files - Secure Share</h1>
+    <div id="status">Connecting to server...</div>
 
     <div id="sender-ui">
+        <p>फाइल चुनें और पासवर्ड बनाएँ</p>
         <input type="file" id="file-input">
-        <input type="text" id="set-password" placeholder="Set a security password">
-        <button class="btn-send" onclick="generateLink()">Generate Secure Link</button>
+        <input type="text" id="set-password" placeholder="सुरक्षा पासवर्ड (जैसे: 1234)">
+        <button class="btn-send" onclick="generateLink()">सुरक्षित लिंक बनाएँ</button>
         
         <div id="link-area" class="hidden">
+            <p>आपका लिंक तैयार है:</p>
             <div class="box" id="share-url"></div>
-            <button class="btn-whatsapp" id="whatsapp-btn" onclick="shareToWhatsApp()">Share via WhatsApp 💬</button>
+            <button class="btn-whatsapp" id="whatsapp-btn" onclick="shareToWhatsApp()">WhatsApp पर शेयर करें 💬</button>
         </div>
     </div>
 
     <div id="receiver-ui" class="hidden">
-        <p>Someone shared a large file with you.</p>
-        <input type="password" id="input-password" placeholder="Enter password to unlock">
-        <button class="btn-send" onclick="connectAndReceive()">Start Download</button>
+        <p>आपको एक फाइल भेजी गई है।</p>
+        <input type="password" id="input-password" placeholder="पासवर्ड डालें">
+        <button class="btn-send" onclick="connectAndReceive()">डाउनलोड शुरू करें</button>
     </div>
 </div>
 
-<div class="seo-footer">
-    <h2>Why use Pintu Nishad P2P Transfer?</h2>
-    <p>
-        Our <strong>free secure file transfer</strong> solution allows you to send large files and big documents without any size limits imposed by servers. 
-        Unlike other services, we use <strong>P2P (Peer-to-Peer)</strong> technology, meaning your data travels directly from your device to the receiver. 
-        It is a <strong>fast file transfer</strong> method that ensures original quality and maximum privacy with end-to-end encryption.
-    </p>
+<div class="footer">
+    <p><strong>Transfer and have your files travel for free</strong> with our secure P2P technology. No registration required for fast file transfer.</p>
+    Created by Pintu Nishad | 100% Private & Secure
 </div>
 
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <script>
     const peer = new Peer();
     let myId = "";
@@ -84,19 +72,19 @@
         if (urlParams.has('id')) {
             document.getElementById('sender-ui').classList.add('hidden');
             document.getElementById('receiver-ui').classList.remove('hidden');
-            document.querySelector('h1').innerText = "Download your shared files";
+            document.getElementById('status').innerText = "फाइल प्राप्त करने के लिए तैयार";
         }
     };
 
     peer.on('open', (id) => {
         myId = id;
-        document.getElementById('status').innerText = "System Ready • Secure Connection Active";
+        document.getElementById('status').innerText = "ऑनलाइन - भेजने के लिए तैयार";
     });
 
     function generateLink() {
         const pass = document.getElementById('set-password').value;
         const file = document.getElementById('file-input').files[0];
-        if(!file || !pass) return alert("Please select a file and set a password.");
+        if(!file || !pass) return alert("फाइल और पासवर्ड दोनों ज़रूरी हैं!");
         
         const base_url = window.location.origin + window.location.pathname;
         const final_url = `${base_url}?id=${myId}&p=${btoa(pass)}`; 
@@ -104,13 +92,12 @@
         document.getElementById('share-url').innerText = final_url;
         document.getElementById('link-area').classList.remove('hidden');
         document.getElementById('whatsapp-btn').style.display = "block";
-        document.getElementById('status').innerText = "Link Generated Successfully";
     }
 
     function shareToWhatsApp() {
         const url = document.getElementById('share-url').innerText;
         const pass = document.getElementById('set-password').value;
-        const text = `I've sent you a secure file.\n\n🔗 Link: ${url}\n🔑 Password: ${pass}\n\nNo registration required. Just open and download.`;
+        const text = `नमस्ते! मैंने आपको एक सुरक्षित फाइल भेजी है।\n\n🔗 लिंक: ${url}\n🔑 पासवर्ड: ${pass}\n\n(No registration required. Just open and download.)`;
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     }
 
@@ -120,13 +107,13 @@
         const encryptedPass = urlParams.get('p');
         const userPass = document.getElementById('input-password').value;
 
-        if(userPass !== atob(encryptedPass)) return alert("Incorrect Password!");
+        if(userPass !== atob(encryptedPass)) return alert("गलत पासवर्ड!");
 
-        document.getElementById('status').innerText = "Connecting to sender...";
+        document.getElementById('status').innerText = "सेंडर से कनेक्ट हो रहा है...";
         const conn = peer.connect(senderId);
 
         conn.on('open', () => {
-            document.getElementById('status').innerText = "Connected! Fetching file...";
+            document.getElementById('status').innerText = "कनेक्ट हो गया! डेटा लोड हो रहा है...";
             conn.send({ type: 'REQ', pass: userPass });
         });
 
@@ -136,7 +123,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url; a.download = data.name; a.click();
-                document.getElementById('status').innerText = "Download Complete!";
+                document.getElementById('status').innerText = "डाउनलोड सफल!";
             }
         });
     }
@@ -148,7 +135,7 @@
                 const setPass = document.getElementById('set-password').value;
                 if(data.pass === setPass) {
                     conn.send({ type: 'FILE', file: file, name: file.name, fileType: file.type });
-                    document.getElementById('status').innerText = "Transferring file...";
+                    document.getElementById('status').innerText = "फाइल भेजी जा रही है...";
                 }
             }
         });
